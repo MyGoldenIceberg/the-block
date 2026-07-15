@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using TheBlock.Api.Api;
 using TheBlock.Api.Data;
 using TheBlock.Api.Domain;
+using TheBlock.Api.Realtime;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -11,6 +12,16 @@ var builder = WebApplication.CreateBuilder(args);
 // tab and survives a member being reordered.
 builder.Services.ConfigureHttpJsonOptions(options =>
     options.SerializerOptions.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase)));
+
+// SignalR serialises with its own options rather than the HTTP ones, so the
+// same contract would otherwise leave by two doors in two shapes.
+builder.Services
+    .AddSignalR()
+    .AddJsonProtocol(options =>
+    {
+        options.PayloadSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+        options.PayloadSerializerOptions.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase));
+    });
 
 var databasePath = Path.Combine(builder.Environment.ContentRootPath, "theblock.db");
 
@@ -20,6 +31,9 @@ builder.Services.AddDbContext<AuctionDbContext>(options =>
 builder.Services.AddSingleton<IClock, SystemClock>();
 builder.Services.AddSingleton<SaleClock>();
 builder.Services.AddScoped<SaleSeeder>();
+
+builder.Services.AddSingleton<SaleNotifier>();
+builder.Services.AddHostedService(services => services.GetRequiredService<SaleNotifier>());
 
 var app = builder.Build();
 
@@ -43,5 +57,6 @@ await using (var scope = app.Services.CreateAsyncScope())
 app.MapGet("/api/health", () => Results.Ok(new { status = "ok" }));
 app.MapLotEndpoints();
 app.MapBidEndpoints();
+app.MapHub<AuctionHub>("/hubs/auction");
 
 app.Run();
