@@ -11,6 +11,7 @@ builder.Services.AddDbContext<AuctionDbContext>(options =>
 
 builder.Services.AddSingleton<IClock, SystemClock>();
 builder.Services.AddSingleton<SaleClock>();
+builder.Services.AddScoped<SaleSeeder>();
 
 var app = builder.Build();
 
@@ -27,6 +28,8 @@ await using (var scope = app.Services.CreateAsyncScope())
     // Bidding writes while the lifecycle notifier reads. WAL lets those
     // overlap instead of surfacing as "database is locked".
     await database.Database.ExecuteSqlRawAsync("PRAGMA journal_mode=WAL;");
+
+    await scope.ServiceProvider.GetRequiredService<SaleSeeder>().SeedAsync();
 }
 
 app.MapGet("/api/health", () => Results.Ok(new { status = "ok" }));

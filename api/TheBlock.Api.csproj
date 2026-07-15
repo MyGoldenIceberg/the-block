@@ -11,4 +11,10 @@
     <PackageReference Include="SQLitePCLRaw.lib.e_sqlite3" Version="2.1.12" />
   </ItemGroup>
 
+  <!-- Linked rather than copied: the challenge dataset stays the single
+       source of truth at its original path, and travels with the build. -->
+  <ItemGroup>
+    <Content Include="..\data\vehicles.json" Link="data\vehicles.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
 </Project>

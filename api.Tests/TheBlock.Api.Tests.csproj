@@ -22,4 +22,9 @@
     <ProjectReference Include="..\api\TheBlock.Api.csproj" />
   </ItemGroup>
 
+  <!-- The anchor is asserted against the real dataset, not a fixture. -->
+  <ItemGroup>
+    <Content Include="..\data\vehicles.json" Link="data\vehicles.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
 </Project>
