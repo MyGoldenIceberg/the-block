@@ -57,6 +57,7 @@ await using (var scope = app.Services.CreateAsyncScope())
 app.MapGet("/api/health", () => Results.Ok(new { status = "ok" }));
 app.MapLotEndpoints();
 app.MapBidEndpoints();
+app.MapDevClockEndpoints(app.Environment);
 app.MapHub<AuctionHub>("/hubs/auction");
 
 app.Run();
