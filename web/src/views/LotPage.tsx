@@ -1,21 +1,10 @@
-import { formatMoney, formatOdometer, formatPrice, vehicleName } from '../format'
+import { formatGrade, formatOdometer, vehicleName } from '../format'
 import { useLot } from '../useSale'
 import { BidPanel } from './BidPanel'
-import { Countdown } from './Countdown'
-import type { LotSummary } from '../api/types'
-
-const RESERVE_COPY = {
-  none: 'No reserve — sells to the highest bidder',
-  met: 'Reserve met',
-  notMet: 'Reserve not met',
-} as const
-
-const OUTCOME_COPY = {
-  pending: '',
-  sold: 'Sold',
-  noSale: 'No sale — the lot drew no bids',
-  ifSale: 'Reserve not met — the high bid is with the seller',
-} as const
+import { Gallery } from './Gallery'
+import { StateBadge } from './Badges'
+import { gradeTier } from './LotCard'
+import type { LotDetail, LotSummary } from '../api/types'
 
 interface LotPageProps {
   id: string
@@ -27,73 +16,139 @@ interface LotPageProps {
 export function LotPage({ id, live, onBid }: LotPageProps) {
   const { lot: detail, error } = useLot(id)
 
-  if (error) return <p>{error}</p>
-  if (!detail) return <p>Loading…</p>
+  if (error) {
+    return (
+      <div className="lot lot--message">
+        <a href="#">Back to the catalogue</a>
+        <p>{error}</p>
+      </div>
+    )
+  }
 
-  // The detail request answers a deep link before the catalogue has loaded;
-  // after that the feed's copy is the fresher one.
+  if (!detail) {
+    return <div className="lot lot--message">Loading the lot…</div>
+  }
+
+  // The detail request answers a deep link before the catalogue has loaded.
+  // After that the feed's copy is the fresher one.
   const lot = live ?? detail.lot
-  const price = formatPrice(lot)
 
   return (
-    <div>
-      <p>
-        <a href="#">Back to the catalogue</a>
-      </p>
+    <div className="lot">
+      <nav className="lot__back">
+        <a href="#">← Back to the catalogue</a>
+      </nav>
 
-      <h1>{vehicleName(lot)}</h1>
-      <p>
-        Lot {lot.lotNumber} · Lane {lot.lane} · VIN {detail.vin}
-      </p>
+      <header className="lot__head">
+        <div className="lot__badges">
+          <StateBadge lot={lot} />
+          {lot.titleStatus !== 'clean' && (
+            <span className="badge badge--warn">{lot.titleStatus} title</span>
+          )}
+        </div>
+        <h1>{vehicleName(lot)}</h1>
+        <p className="lot__ident">
+          Lot {lot.lotNumber} · Lane {lot.lane} · VIN {detail.vin}
+        </p>
+      </header>
 
-      <p>
-        {lot.state}
-        {lot.onTheBlock ? ' — on the block' : ''} · <Countdown lot={lot} />
-      </p>
+      <div className="lot__main">
+        <Gallery images={detail.images} name={vehicleName(lot)} />
+        <Condition detail={detail} lot={lot} />
+        <Specification detail={detail} lot={lot} />
+        <Seller lot={lot} />
+      </div>
 
-      <h2>
-        {price.label} {price.amount} · {lot.bidCount} bids
-      </h2>
-      <p>{RESERVE_COPY[lot.reserve]}</p>
-      {lot.buyNowPrice && <p>Buy now {formatMoney(lot.buyNowPrice)}</p>}
-      {lot.outcome !== 'pending' && <p>{OUTCOME_COPY[lot.outcome]}</p>}
+      <div className="lot__side">
+        <BidPanel lot={lot} onBid={onBid} />
+      </div>
+    </div>
+  )
+}
 
-      <BidPanel lot={lot} onBid={onBid} />
+/**
+ * The whole reason a dealer can buy this sight unseen.
+ *
+ * Grade, title and damage are not trivia to tuck under the specs -- they are
+ * the entire basis on which someone commits money to a car they have never
+ * seen. They lead.
+ */
+function Condition({ detail, lot }: { detail: LotDetail; lot: LotSummary }) {
+  return (
+    <section className="panel">
+      <h2>Condition</h2>
 
-      <h3>Condition</h3>
-      <p>
-        Grade {lot.conditionGrade} · Title {lot.titleStatus}
-      </p>
-      <p>{detail.conditionReport}</p>
-      {detail.damageNotes.length > 0 && (
-        <ul>
+      <div className="condition__top">
+        <div className="condition__grade" data-tier={gradeTier(lot.conditionGrade)}>
+          <strong>{formatGrade(lot.conditionGrade)}</strong>
+          <span>of 5.0</span>
+        </div>
+        <dl className="condition__facts">
+          <div>
+            <dt>Title</dt>
+            <dd data-clean={lot.titleStatus === 'clean'}>{lot.titleStatus}</dd>
+          </div>
+          <div>
+            <dt>Odometer</dt>
+            <dd>{formatOdometer(lot.odometerKm)}</dd>
+          </div>
+        </dl>
+      </div>
+
+      <p className="condition__report">{detail.conditionReport}</p>
+
+      <h3>
+        Damage {detail.damageNotes.length > 0 && <span>({detail.damageNotes.length})</span>}
+      </h3>
+      {detail.damageNotes.length === 0 ? (
+        <p className="condition__none">No damage noted.</p>
+      ) : (
+        <ul className="condition__damage">
           {detail.damageNotes.map((note) => (
             <li key={note}>{note}</li>
           ))}
         </ul>
       )}
+    </section>
+  )
+}
 
-      <h3>Specification</h3>
-      <ul>
-        <li>{formatOdometer(lot.odometerKm)}</li>
-        <li>{detail.engine}</li>
-        <li>
-          {detail.transmission} · {detail.drivetrain} · {detail.fuelType}
-        </li>
-        <li>
-          {detail.exteriorColor} over {detail.interiorColor}
-        </li>
-      </ul>
+function Specification({ detail, lot }: { detail: LotDetail; lot: LotSummary }) {
+  const rows: [string, string][] = [
+    ['Year', String(lot.year)],
+    ['Body', lot.bodyStyle],
+    ['Engine', detail.engine],
+    ['Transmission', detail.transmission],
+    ['Drivetrain', detail.drivetrain],
+    ['Fuel', detail.fuelType],
+    ['Exterior', detail.exteriorColor],
+    ['Interior', detail.interiorColor],
+  ]
 
-      <h3>Seller</h3>
-      <p>
-        {lot.sellingDealership} — {lot.city}, {lot.province}
+  return (
+    <section className="panel">
+      <h2>Specification</h2>
+      <dl className="spec">
+        {rows.map(([label, value]) => (
+          <div key={label}>
+            <dt>{label}</dt>
+            <dd>{value}</dd>
+          </div>
+        ))}
+      </dl>
+    </section>
+  )
+}
+
+function Seller({ lot }: { lot: LotSummary }) {
+  return (
+    <section className="panel">
+      <h2>Selling dealer</h2>
+      <p className="seller__name">{lot.sellingDealership}</p>
+      <p className="seller__where">
+        {lot.city}, {lot.province}
       </p>
-
-      <h3>Photos</h3>
-      {detail.images.map((image) => (
-        <img key={image} src={image} alt="" width={240} loading="lazy" />
-      ))}
-    </div>
+      <p className="seller__note">Transport from {lot.province} is the buyer's cost.</p>
+    </section>
   )
 }
