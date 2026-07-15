@@ -1,8 +1,16 @@
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using Microsoft.EntityFrameworkCore;
+using TheBlock.Api.Api;
 using TheBlock.Api.Data;
 using TheBlock.Api.Domain;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Enums cross the wire as names, not ordinals: "preview" reads in a network
+// tab and survives a member being reordered.
+builder.Services.ConfigureHttpJsonOptions(options =>
+    options.SerializerOptions.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase)));
 
 var databasePath = Path.Combine(builder.Environment.ContentRootPath, "theblock.db");
 
@@ -33,5 +41,6 @@ await using (var scope = app.Services.CreateAsyncScope())
 }
 
 app.MapGet("/api/health", () => Results.Ok(new { status = "ok" }));
+app.MapLotEndpoints();
 
 app.Run();
