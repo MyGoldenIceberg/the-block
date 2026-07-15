@@ -4,3 +4,16 @@ node_modules/
 .DS_Store
 *.log
 *.bak
+
+# .NET build output
+bin/
+obj/
+.vs/
+
+# SQLite database, created and seeded on first run
+*.db
+*.db-shm
+*.db-wal
+
+# Vite build output
+web/dist/

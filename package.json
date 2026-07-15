@@ -1,0 +1,15 @@
+{
+  "name": "the-block",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Buyer side of a wholesale vehicle auction platform",
+  "scripts": {
+    "postinstall": "npm install --prefix web",
+    "dev": "concurrently -n api,web -c blue,magenta -k \"dotnet run --project api\" \"npm run dev --prefix web\"",
+    "test": "dotnet test",
+    "build": "dotnet build && npm run build --prefix web"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}
