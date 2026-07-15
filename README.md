@@ -139,8 +139,7 @@ Beyond the suite, the flows were driven in a browser: the bid path end to end, t
 
 ## Time spent
 
-<!-- Replace this with your own figure before sending the link. -->
-_TODO_
+About 3 hours. The order the commits run in is the order the work happened: the domain first and framework-free, then persistence, then the API, then the client, then polish.
 
 ## What I'd do with more time
 
