@@ -87,11 +87,24 @@ public static class BidScript
             return [];
         }
 
-        // Bidding crowds the close, so the last of these lands inside the
-        // final minutes and the lot goes out on the block rather than in
-        // silence.
+        // Bidding crowds the close, so the tail of the ladder is held back for
+        // the block itself and a lot goes out in a flurry rather than in
+        // silence. Spread evenly, roughly twenty bids across a 24-hour run is
+        // one every seventy minutes, and the closing minutes -- the only part
+        // anyone actually watches -- would be empty.
         var closesAt = opensAt + AuctionRules.LotDuration;
-        var times = SpreadTimes(opensAt, closesAt - TimeSpan.FromSeconds(30), amounts.Count, random, bias: 2.6);
+        var blockOpens = closesAt - AuctionRules.BlockWindow;
+
+        var onTheBlock = Math.Min(amounts.Count, Math.Max(3, amounts.Count / 3));
+        var earlier = amounts.Count - onTheBlock;
+
+        var times = new List<DateTimeOffset>();
+        if (earlier > 0)
+        {
+            times.AddRange(SpreadTimes(opensAt, blockOpens, earlier, random, bias: 2.0));
+        }
+
+        times.AddRange(SpreadTimes(blockOpens, closesAt - TimeSpan.FromSeconds(20), onTheBlock, random, bias: 1.4));
 
         return amounts.Select((amount, index) => Seeded(vehicle.Id, amount, times[index], random));
     }
