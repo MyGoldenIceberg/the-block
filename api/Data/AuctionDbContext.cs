@@ -31,6 +31,28 @@ public sealed class AuctionDbContext(DbContextOptions<AuctionDbContext> options)
         duration => duration.Ticks,
         ticks => TimeSpan.FromTicks(ticks));
 
+    /// <summary>
+    /// Instants are stored as UTC ticks.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Not a refinement -- a requirement. The SQLite provider cannot translate
+    /// a DateTimeOffset comparison at all, and every read of a lot's price is
+    /// "the highest bid placed at or before now". Left as the default mapping
+    /// the query does not fail to compile, it throws at runtime.
+    /// </para>
+    /// <para>
+    /// Ticks also settle the storage question properly. The default mapping is
+    /// text, which sorts correctly only while every value carries an identical
+    /// offset -- true here, but true by convention, and one DateTimeOffset.Now
+    /// away from silently mis-ordering. UtcTicks normalises on the way in, so
+    /// the invariant is enforced by the boundary rather than remembered.
+    /// </para>
+    /// </remarks>
+    private static readonly ValueConverter<DateTimeOffset, long> InstantToUtcTicks = new(
+        instant => instant.UtcTicks,
+        ticks => new DateTimeOffset(ticks, TimeSpan.Zero));
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         builder.Entity<Lot>(lot =>
@@ -50,6 +72,7 @@ public sealed class AuctionDbContext(DbContextOptions<AuctionDbContext> options)
             lot.Property(entity => entity.ReservePrice).HasConversion(MoneyToCents);
             lot.Property(entity => entity.BuyNowPrice).HasConversion(MoneyToCents);
             lot.Property(entity => entity.Extension).HasConversion(DurationToTicks);
+            lot.Property(entity => entity.OpensAt).HasConversion(InstantToUtcTicks);
 
             lot.HasIndex(entity => entity.OpensAt);
             lot.HasIndex(entity => entity.LotNumber).IsUnique();
@@ -64,12 +87,18 @@ public sealed class AuctionDbContext(DbContextOptions<AuctionDbContext> options)
         {
             bid.HasKey(entity => entity.Id);
             bid.Property(entity => entity.Amount).HasConversion(MoneyToCents);
+            bid.Property(entity => entity.PlacedAtSale).HasConversion(InstantToUtcTicks);
+            bid.Property(entity => entity.CreatedAtRealUtc).HasConversion(InstantToUtcTicks);
 
             // Every read of a lot's price is "the highest bid placed at or
             // before the current sale time", so that is the index.
             bid.HasIndex(entity => new { entity.LotId, entity.PlacedAtSale });
         });
 
-        builder.Entity<SaleAnchorState>(anchor => anchor.HasKey(entity => entity.Id));
+        builder.Entity<SaleAnchorState>(anchor =>
+        {
+            anchor.HasKey(entity => entity.Id);
+            anchor.Property(entity => entity.AnchoredAtRealUtc).HasConversion(InstantToUtcTicks);
+        });
     }
 }
