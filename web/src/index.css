@@ -1,7 +1,61 @@
+/*
+ * A tool, not a showroom.
+ *
+ * The buyer is a dealer working a catalogue of two hundred cars to find the
+ * few worth money. That wants density, a clear read on risk, and money that
+ * lines up when you scan a column of it -- not big photography. The dataset's
+ * images are placeholders anyway, so the design leans on the numbers, which
+ * is what the real product would do too.
+ */
+
 :root {
+  --ink: #16181d;
+  --ink-soft: #5b616e;
+  --ink-faint: #8b909c;
+  --page: #f4f5f7;
+  --surface: #ffffff;
+  --line: #e2e4e9;
+  --line-strong: #cfd3db;
+
+  --live: #0b7a4b;
+  --live-bg: #e7f5ee;
+  --block: #b4341c;
+  --block-bg: #fdeeea;
+  --warn: #8a5a00;
+  --warn-bg: #fdf3e0;
+  --accent: #1c4ed8;
+
+  --radius: 10px;
+  --shadow: 0 1px 2px rgb(16 24 40 / 6%), 0 1px 3px rgb(16 24 40 / 4%);
+  --shadow-lift: 0 4px 12px rgb(16 24 40 / 10%);
+
   font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   line-height: 1.5;
+  color: var(--ink);
   -webkit-font-smoothing: antialiased;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ink: #e8eaee;
+    --ink-soft: #a2a8b5;
+    --ink-faint: #767d8b;
+    --page: #101216;
+    --surface: #191c22;
+    --line: #2a2e37;
+    --line-strong: #3a3f4a;
+
+    --live: #4ade80;
+    --live-bg: #10291d;
+    --block: #ff8264;
+    --block-bg: #2e1611;
+    --warn: #e5b05a;
+    --warn-bg: #2b2113;
+    --accent: #7aa2ff;
+
+    --shadow: 0 1px 2px rgb(0 0 0 / 40%);
+    --shadow-lift: 0 4px 14px rgb(0 0 0 / 50%);
+  }
 }
 
 * {
@@ -10,4 +64,834 @@
 
 body {
   margin: 0;
+  background: var(--page);
+}
+
+/* Money and clocks must not jitter or wander as digits change. */
+.card__price-amount,
+.bidbox__amount,
+.card__clock,
+.condition__grade strong,
+.card__facts {
+  font-variant-numeric: tabular-nums;
+}
+
+a {
+  color: inherit;
+}
+
+button {
+  font: inherit;
+  cursor: pointer;
+}
+
+:where(button, a, input, select):focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ---------- shell ---------- */
+
+.masthead {
+  padding: 1.5rem 1.25rem 0.5rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.masthead h1 {
+  margin: 0;
+  font-size: 1.5rem;
+  letter-spacing: -0.02em;
+}
+
+.masthead p {
+  margin: 0.125rem 0 0;
+  color: var(--ink-soft);
+  font-size: 0.875rem;
+}
+
+.catalogue {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding-bottom: 4rem;
+}
+
+.catalogue__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 290px), 1fr));
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+}
+
+.catalogue__empty {
+  padding: 4rem 1.25rem;
+  text-align: center;
+  color: var(--ink-soft);
+}
+
+/* ---------- filters ---------- */
+
+.filters {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.625rem;
+  align-items: end;
+  padding: 0.875rem 1.25rem;
+  background: color-mix(in srgb, var(--page) 88%, transparent);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--line);
+}
+
+.filters label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.filters select,
+.filters input {
+  font: inherit;
+  font-size: 0.875rem;
+  padding: 0.4rem 0.5rem;
+  border: 1px solid var(--line-strong);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--ink);
+}
+
+.filters__search {
+  flex: 1 1 15rem;
+  min-width: 0;
+}
+
+.filters__count {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 0 0 auto;
+  font-size: 0.8125rem;
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+
+.filters__count button {
+  border: 1px solid var(--line-strong);
+  background: var(--surface);
+  color: var(--ink);
+  border-radius: 6px;
+  padding: 0.25rem 0.55rem;
+  font-size: 0.75rem;
+}
+
+/* ---------- badges ---------- */
+
+.badge {
+  display: inline-block;
+  padding: 0.15rem 0.45rem;
+  border-radius: 999px;
+  font-size: 0.6875rem;
+  font-weight: 650;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  background: color-mix(in srgb, var(--ink-faint) 14%, transparent);
+  color: var(--ink-soft);
+}
+
+.badge--live,
+.badge--good {
+  background: var(--live-bg);
+  color: var(--live);
+}
+
+.badge--block {
+  background: var(--block-bg);
+  color: var(--block);
+}
+
+.badge--warn {
+  background: var(--warn-bg);
+  color: var(--warn);
+  text-transform: capitalize;
+}
+
+.badge--preview {
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  color: var(--accent);
+}
+
+/* A lot in its last minutes should catch the eye across a grid. */
+.badge--block {
+  animation: pulse 1.8s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  50% {
+    opacity: 0.55;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .badge--block {
+    animation: none;
+  }
+}
+
+/* ---------- card ---------- */
+
+.card {
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  overflow: hidden;
+  text-decoration: none;
+  box-shadow: var(--shadow);
+  transition: box-shadow 0.15s, transform 0.15s;
+}
+
+.card:hover {
+  box-shadow: var(--shadow-lift);
+  transform: translateY(-2px);
+}
+
+.card[data-state='ended'] {
+  opacity: 0.72;
+}
+
+.card[data-state='ended']:hover {
+  opacity: 1;
+}
+
+.thumb {
+  display: block;
+  width: 100%;
+  /* The width and height attributes on the img are what let the browser hold
+     the space before the picture lands, but they also pin the height, and
+     aspect-ratio can only size a box whose other side is free. */
+  height: auto;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  background: color-mix(in srgb, var(--ink-faint) 12%, transparent);
+  border-bottom: 1px solid var(--line);
+}
+
+.thumb--empty {
+  display: grid;
+  place-items: center;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--ink-faint);
+}
+
+.card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 0.75rem;
+  flex: 1;
+}
+
+.card__badges {
+  display: flex;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.card__name {
+  margin: 0;
+  font-size: 0.9375rem;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+}
+
+.card__facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--ink-soft);
+}
+
+/* Grade is the shorthand for everything a photo cannot tell you. */
+.card__grade {
+  font-weight: 650;
+}
+
+.card__grade[data-tier='low'] {
+  color: var(--block);
+}
+
+.card__grade[data-tier='high'] {
+  color: var(--live);
+}
+
+.card__where {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--ink-faint);
+}
+
+.card__price {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  margin-top: auto;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--line);
+  flex-wrap: wrap;
+}
+
+.card__price-label {
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ink-faint);
+  width: 100%;
+}
+
+.card__price-amount {
+  font-size: 1.125rem;
+  letter-spacing: -0.02em;
+}
+
+.card__bids {
+  font-size: 0.75rem;
+  color: var(--ink-faint);
+}
+
+.card__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  color: var(--ink-soft);
+}
+
+.card__buynow {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--ink-faint);
+}
+
+/* ---------- lot page ---------- */
+
+.lot {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 22rem;
+  grid-template-areas:
+    'back back'
+    'head side'
+    'main side';
+  gap: 1rem 1.5rem;
+  align-items: start;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1.25rem 1.25rem 5rem;
+}
+
+.lot--message {
+  display: block;
+  padding: 4rem 1.25rem;
+  color: var(--ink-soft);
+}
+
+.lot__back {
+  grid-area: back;
+  font-size: 0.875rem;
+}
+
+.lot__back a {
+  color: var(--ink-soft);
+  text-decoration: none;
+}
+
+.lot__back a:hover {
+  color: var(--ink);
+}
+
+.lot__head {
+  grid-area: head;
+}
+
+.lot__badges {
+  display: flex;
+  gap: 0.35rem;
+  margin-bottom: 0.4rem;
+}
+
+.lot__head h1 {
+  margin: 0;
+  font-size: 1.625rem;
+  letter-spacing: -0.02em;
+}
+
+.lot__ident {
+  margin: 0.25rem 0 0;
+  font-size: 0.8125rem;
+  color: var(--ink-faint);
+}
+
+.lot__main {
+  grid-area: main;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-width: 0;
+}
+
+.lot__side {
+  grid-area: side;
+  position: sticky;
+  top: 1.25rem;
+}
+
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 1rem;
+  box-shadow: var(--shadow);
+}
+
+.panel h2 {
+  margin: 0 0 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.panel h3 {
+  margin: 1rem 0 0.4rem;
+  font-size: 0.8125rem;
+}
+
+/* ---------- condition ---------- */
+
+.condition__top {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.condition__grade {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 5rem;
+  padding: 0.5rem;
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--ink-faint) 10%, transparent);
+}
+
+.condition__grade strong {
+  font-size: 1.75rem;
+  line-height: 1;
+  letter-spacing: -0.03em;
+}
+
+.condition__grade span {
+  font-size: 0.6875rem;
+  color: var(--ink-faint);
+}
+
+.condition__grade[data-tier='low'] {
+  background: var(--block-bg);
+  color: var(--block);
+}
+
+.condition__grade[data-tier='high'] {
+  background: var(--live-bg);
+  color: var(--live);
+}
+
+.condition__facts {
+  display: flex;
+  gap: 1.5rem;
+  margin: 0;
+}
+
+.condition__facts dt {
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ink-faint);
+}
+
+.condition__facts dd {
+  margin: 0.1rem 0 0;
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+
+/* Only the title status, which arrives lowercase from the dataset. Applied to
+   the whole list it also renders the odometer as "41,106 Km". */
+.condition__facts dd[data-clean] {
+  text-transform: capitalize;
+}
+
+.condition__facts dd[data-clean='false'] {
+  color: var(--warn);
+}
+
+.condition__report {
+  margin: 0.875rem 0 0;
+  font-size: 0.875rem;
+  color: var(--ink-soft);
+}
+
+.condition__damage {
+  margin: 0;
+  padding-left: 1.1rem;
+  font-size: 0.875rem;
+}
+
+.condition__damage li {
+  margin-bottom: 0.2rem;
+}
+
+.condition__none {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--live);
+}
+
+/* ---------- spec / seller ---------- */
+
+.spec {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
+  gap: 0.75rem;
+  margin: 0;
+}
+
+.spec dt {
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ink-faint);
+}
+
+.spec dd {
+  margin: 0.1rem 0 0;
+  font-size: 0.875rem;
+  text-transform: capitalize;
+}
+
+.seller__name {
+  margin: 0;
+  font-weight: 650;
+}
+
+.seller__where,
+.seller__note {
+  margin: 0.15rem 0 0;
+  font-size: 0.8125rem;
+  color: var(--ink-soft);
+}
+
+.seller__note {
+  color: var(--ink-faint);
+}
+
+/* ---------- gallery ---------- */
+
+.gallery__frame {
+  aspect-ratio: 4 / 3;
+  /* Capped, or a full-width 4:3 frame runs to 550px and pushes the grade and
+     the damage list below the fold -- which is the wrong way round for a car
+     nobody is going to look at in person. */
+  max-height: 22rem;
+  background: color-mix(in srgb, var(--ink-faint) 12%, transparent);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.gallery__frame img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.gallery__missing,
+.gallery__frame--empty {
+  display: grid;
+  place-items: center;
+  height: 100%;
+  font-size: 0.8125rem;
+  color: var(--ink-faint);
+}
+
+.gallery__strip {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  overflow-x: auto;
+  padding-bottom: 0.25rem;
+}
+
+.gallery__pick {
+  flex: 0 0 5rem;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--ink-faint) 12%, transparent);
+  aspect-ratio: 4 / 3;
+}
+
+.gallery__pick[aria-current='true'] {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+.gallery__pick img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* ---------- bid box ---------- */
+
+.bidbox {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 1rem;
+  box-shadow: var(--shadow);
+}
+
+.bidbox[data-state='live'] {
+  border-color: color-mix(in srgb, var(--live) 45%, var(--line));
+}
+
+.bidbox__price {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.bidbox__label {
+  width: 100%;
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ink-faint);
+}
+
+.bidbox__amount {
+  font-size: 1.875rem;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+}
+
+.bidbox__bids {
+  font-size: 0.8125rem;
+  color: var(--ink-faint);
+}
+
+.bidbox__status {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8125rem;
+  color: var(--ink-soft);
+  padding-bottom: 0.6rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.bidbox__field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ink-faint);
+}
+
+.bidbox__field input {
+  font: inherit;
+  font-size: 1.125rem;
+  font-variant-numeric: tabular-nums;
+  text-transform: none;
+  letter-spacing: normal;
+  color: var(--ink);
+  padding: 0.5rem 0.6rem;
+  border: 1px solid var(--line-strong);
+  border-radius: 6px;
+  background: var(--page);
+}
+
+.bidbox__go {
+  padding: 0.65rem;
+  border: 0;
+  border-radius: 8px;
+  background: var(--ink);
+  color: var(--page);
+  font-weight: 650;
+  font-size: 0.9375rem;
+}
+
+.bidbox__go:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.bidbox__hint,
+.bidbox__buynow,
+.bidbox__closed {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--ink-faint);
+}
+
+.bidbox__refusal {
+  margin: 0;
+  padding: 0.5rem 0.6rem;
+  border-radius: 6px;
+  background: var(--warn-bg);
+  color: var(--warn);
+  font-size: 0.8125rem;
+}
+
+.bidbox__ok {
+  margin: 0;
+  padding: 0.5rem 0.6rem;
+  border-radius: 6px;
+  background: var(--live-bg);
+  color: var(--live);
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+/* ---------- dev clock ---------- */
+
+.devclock {
+  position: fixed;
+  right: 1rem;
+  bottom: 1rem;
+  z-index: 20;
+  font-size: 0.8125rem;
+}
+
+.devclock__toggle {
+  padding: 0.4rem 0.7rem;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--ink-soft);
+  box-shadow: var(--shadow-lift);
+}
+
+.devclock__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  width: 15rem;
+  margin-bottom: 0.5rem;
+  padding: 0.75rem;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow-lift);
+}
+
+.devclock__body button {
+  padding: 0.4rem;
+  border: 1px solid var(--line-strong);
+  border-radius: 6px;
+  background: var(--page);
+  color: var(--ink);
+}
+
+.devclock__body button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.devclock__counts {
+  margin: 0;
+  color: var(--ink-soft);
+  font-variant-numeric: tabular-nums;
+}
+
+.devclock__note {
+  margin: 0;
+  font-size: 0.6875rem;
+  color: var(--ink-faint);
+}
+
+/* ---------- narrow screens ---------- */
+
+@media (max-width: 900px) {
+  .lot {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      'back'
+      'head'
+      'side'
+      'main';
+    padding-bottom: 1.5rem;
+  }
+
+  /* The bid box travels with the page rather than pinning to a viewport that
+     is mostly bid box already. It sits above the detail instead, where a
+     buyer meets it before they have to go looking. */
+  .lot__side {
+    position: static;
+  }
+
+  .filters {
+    position: static;
+  }
+
+  .filters__search {
+    flex-basis: 100%;
+  }
+
+  .filters label {
+    flex: 1 1 7rem;
+  }
+
+  .filters__count {
+    margin-left: 0;
+    flex-basis: 100%;
+  }
+}
+
+@media (max-width: 520px) {
+  .catalogue__grid {
+    grid-template-columns: 1fr;
+    padding: 0.75rem;
+  }
+
+  .masthead {
+    padding: 1rem 0.75rem 0.25rem;
+  }
+
+  .lot {
+    padding: 0.75rem 0.75rem 1.5rem;
+  }
 }
