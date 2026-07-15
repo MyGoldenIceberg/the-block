@@ -4,19 +4,23 @@ import type { BidRefused, BidResult, LotDetail, LotSummary, SaleEnvelope } from 
 const BUYER_STORAGE_KEY = 'the-block.buyer-id'
 
 /**
- * Who this browser is bidding as.
+ * Who this tab is bidding as.
  *
  * There are no accounts -- the challenge does not ask for any -- so the
- * browser invents an id and keeps it. Enough to tell a buyer which bids are
- * theirs and to stop them bidding against themselves. It is not
- * authentication, and nothing of value hangs off it.
+ * browser invents an id. Enough to tell a buyer which bids are theirs and to
+ * stop them bidding against themselves. It is not authentication and nothing
+ * of value hangs off it.
+ *
+ * Per tab rather than per browser, deliberately: two tabs are two buyers, so
+ * a bidding war can be watched from both sides on one machine. It survives a
+ * reload, which is what a buyer would notice.
  */
 export function buyerId(): string {
-  let id = localStorage.getItem(BUYER_STORAGE_KEY)
+  let id = sessionStorage.getItem(BUYER_STORAGE_KEY)
 
   if (!id) {
     id = crypto.randomUUID()
-    localStorage.setItem(BUYER_STORAGE_KEY, id)
+    sessionStorage.setItem(BUYER_STORAGE_KEY, id)
   }
 
   return id

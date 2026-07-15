@@ -39,10 +39,16 @@ async function waitForSale<T>(load: () => Promise<T>): Promise<T> {
  * browser. At this size that beats a round trip for every facet change, and
  * browsing is the one part of this that genuinely does not need a server.
  */
-export function useSale(): SaleState & { replace: (lot: LotSummary) => void } {
+export function useSale(): SaleState & { replace: (lot: LotSummary) => void; reload: () => void } {
   const [lots, setLots] = useState<LotSummary[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+
+  const reload = useCallback(() => {
+    fetchLots()
+      .then(setLots)
+      .catch(() => undefined)
+  }, [])
 
   useEffect(() => {
     let live = true
@@ -61,7 +67,7 @@ export function useSale(): SaleState & { replace: (lot: LotSummary) => void } {
     setLots((current) => current.map((lot) => (lot.id === updated.id ? updated : lot)))
   }, [])
 
-  return { lots, loading, error, replace }
+  return { lots, loading, error, replace, reload }
 }
 
 export function useLot(id: string): { lot: LotDetail | null; error: string | null } {

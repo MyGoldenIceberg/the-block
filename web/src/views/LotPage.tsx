@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import { formatMoney, formatOdometer, formatPrice, vehicleName } from '../format'
 import { useLot } from '../useSale'
 import { BidPanel } from './BidPanel'
@@ -18,13 +17,21 @@ const OUTCOME_COPY = {
   ifSale: 'Reserve not met — the high bid is with the seller',
 } as const
 
-export function LotPage({ id }: { id: string }) {
+interface LotPageProps {
+  id: string
+  /** The catalogue's copy of this lot, kept current by the feed. */
+  live: LotSummary | undefined
+  onBid: (lot: LotSummary) => void
+}
+
+export function LotPage({ id, live, onBid }: LotPageProps) {
   const { lot: detail, error } = useLot(id)
-  const [live, setLive] = useState<LotSummary | null>(null)
 
   if (error) return <p>{error}</p>
   if (!detail) return <p>Loading…</p>
 
+  // The detail request answers a deep link before the catalogue has loaded;
+  // after that the feed's copy is the fresher one.
   const lot = live ?? detail.lot
   const price = formatPrice(lot)
 
@@ -51,7 +58,7 @@ export function LotPage({ id }: { id: string }) {
       {lot.buyNowPrice && <p>Buy now {formatMoney(lot.buyNowPrice)}</p>}
       {lot.outcome !== 'pending' && <p>{OUTCOME_COPY[lot.outcome]}</p>}
 
-      <BidPanel lot={lot} onBid={setLive} />
+      <BidPanel lot={lot} onBid={onBid} />
 
       <h3>Condition</h3>
       <p>
