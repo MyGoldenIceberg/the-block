@@ -20,10 +20,20 @@ public sealed class SaleSeeder(AuctionDbContext database, SaleClock clock, ILogg
             return;
         }
 
-        database.Lots.AddRange(vehicles.Select(ToLot));
+        var lots = vehicles.Select(ToLot).ToList();
+        database.Lots.AddRange(lots);
+
+        // Written after the anchor, and only ever with it: the offset decides
+        // which lots have already run, and so which bidding is already history.
+        var anchoredNow = clock.SaleNow;
+        var bids = vehicles
+            .SelectMany(vehicle => BidScript.Generate(vehicle, VehicleDataset.ParseSaleTime(vehicle.AuctionStart), anchoredNow))
+            .ToList();
+
+        database.Bids.AddRange(bids);
         await database.SaveChangesAsync(cancellationToken);
 
-        logger.LogInformation("Seeded {Count} lots.", vehicles.Count);
+        logger.LogInformation("Seeded {Lots} lots and {Bids} scripted bids.", lots.Count, bids.Count);
     }
 
     /// <summary>
