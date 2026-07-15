@@ -79,6 +79,26 @@ public static class LotLifecycle
     public static DateTimeOffset ClosesAt(DateTimeOffset opensAt, TimeSpan extension) =>
         opensAt + AuctionRules.LotDuration + extension;
 
+    /// <summary>
+    /// How much longer a bid landing now should hold a lot open.
+    /// </summary>
+    /// <remarks>
+    /// A lot that can be won by bidding in its last second is not an auction,
+    /// it is a reflex test. Bidding on the block pushes the close far enough
+    /// out that everyone still in it gets an answer, so a lot ends when the
+    /// bidding stops rather than when the clock happens to run out.
+    /// </remarks>
+    public static TimeSpan ExtensionFor(LotStatus status, DateTimeOffset saleNow)
+    {
+        if (!status.OnTheBlock)
+        {
+            return TimeSpan.Zero;
+        }
+
+        var held = saleNow + AuctionRules.BlockExtension;
+        return held > status.ClosesAt ? held - status.ClosesAt : TimeSpan.Zero;
+    }
+
     public static LotStatus Evaluate(
         DateTimeOffset opensAt,
         TimeSpan extension,

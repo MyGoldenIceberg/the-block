@@ -85,6 +85,12 @@ public static class BidEndpoints
             IsSeeded = false,
         });
 
+        // Bidding on the block holds the lot open, so it ends when the bidding
+        // stops rather than when the clock happens to run out. Stored as a
+        // duration, which means the same thing on any timeline and survives a
+        // re-anchor untouched.
+        lot.Extension += LotLifecycle.ExtensionFor(status, saleNow);
+
         // Touching the lot is what serialises bidding on it. Two buyers who
         // read the same high bid cannot both win: the second UPDATE matches no
         // row, and EF raises rather than quietly accepting a bid that was
