@@ -104,7 +104,10 @@ public static class BidScript
             times.AddRange(SpreadTimes(opensAt, blockOpens, earlier, random, bias: 2.0));
         }
 
-        times.AddRange(SpreadTimes(blockOpens, closesAt - TimeSpan.FromSeconds(20), onTheBlock, random, bias: 1.4));
+        // Hard toward the hammer. Bidding does not merely lean late, it piles
+        // into the last moments, and spread evenly across the block window
+        // even this tail is one bid every ninety seconds.
+        times.AddRange(SpreadTimes(blockOpens, closesAt - TimeSpan.FromSeconds(15), onTheBlock, random, bias: 4.5));
 
         return amounts.Select((amount, index) => Seeded(vehicle.Id, amount, times[index], random));
     }
